@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>無印収納シミュレーター 64cm</title>
+<style>
+body{margin:0;font-family:-apple-system,sans-serif;background:#ececec}
+#topbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #ccc;overflow-x:auto;white-space:nowrap;z-index:999}
+.btn{display:inline-block;background:#222;color:#fff;border:none;border-radius:10px;padding:10px 14px;margin:4px;font-size:14px}
+#info{padding:10px;background:#fafafa;border-bottom:1px solid #ddd;font-size:13px}
+#wrap{overflow:auto;height:calc(100vh - 120px);padding:16px}
+#zoomContainer{transform-origin:top center;width:fit-content;margin:auto}
+#closet{position:relative;width:640px;height:2000px;border:3px solid #444;background:#fff;margin:auto;touch-action:none}
+.shelf{position:absolute;left:0;width:100%;border-top:2px dashed rgba(0,80,255,.5)}
+.item{position:absolute;background:rgba(255,255,255,.92);border:2px solid #333;border-radius:10px;padding:6px;box-sizing:border-box;touch-action:none;user-select:none;font-size:12px}
+.resize{position:absolute;right:0;bottom:0;width:18px;height:18px;background:#333;border-radius:6px 0 6px 0}
+</style>
+</head>
+<body>
+<div id="topbar">
+<button class="btn" onclick="addItem('3段',17,18)">3段</button>
+<button class="btn" onclick="addItem('6段',17,32)">6段</button>
+<button class="btn" onclick="addItem('ワイド小',37,12)">ワイド小</button>
+<button class="btn" onclick="addItem('ワイド中',37,18)">ワイド中</button>
+<button class="btn" onclick="addItem('ワイド大',37,24)">ワイド大</button>
+<button class="btn" onclick="addItem('引出2個',37,12)">引出2個</button>
+<button class="btn" onclick="addItem('ファイル',10,32)">ファイル</button>
+<button class="btn" onclick="zoomIn()">＋</button>
+<button class="btn" onclick="zoomOut()">－</button>
+<button class="btn" onclick="fitScreen()">Fit</button>
+<button class="btn" onclick="clearItems()">全削除</button>
+</div>
+
+<div id="info">棚幅 64cm / 高さ200cm / 奥行26cm / 5段</div>
+
+<div id="wrap">
+<div id="zoomContainer">
+<div id="closet"></div>
+</div>
+</div>
+
+<script>
+const closet=document.getElementById('closet');
+const zoomContainer=document.getElementById('zoomContainer');
+let scale=1;
+
+for(let i=1;i<5;i++){
+ let s=document.createElement('div');
+ s.className='shelf';
+ s.style.top=(i*400)+'px';
+ closet.appendChild(s);
+}
+
+function applyZoom(){
+ zoomContainer.style.transform='scale('+scale+')';
+}
+
+function zoomIn(){
+ scale += 0.1;
+ applyZoom();
+}
+
+function zoomOut(){
+ scale = Math.max(0.2, scale - 0.1);
+ applyZoom();
+}
+
+function fitScreen(){
+ const wrapWidth=document.getElementById('wrap').clientWidth - 40;
+ scale = wrapWidth / closet.offsetWidth;
+ applyZoom();
+}
+
+window.addEventListener('load', fitScreen);
+window.addEventListener('resize', fitScreen);
+
+function addItem(name,w,h){
+ let d=document.createElement('div');
+ d.className='item';
+ d.style.width=(w*10)+'px';
+ d.style.height=(h*10)+'px';
+ d.style.left='20px';
+ d.style.top='20px';
+ d.innerHTML='<b>'+name+'</b><br>'+w+'×'+h+'cm';
+
+ let r=document.createElement('div');
+ r.className='resize';
+ d.appendChild(r);
+
+ drag(d);
+ resize(d,r);
+
+ closet.appendChild(d);
+}
+
+function clearItems(){
+ document.querySelectorAll('.item').forEach(x=>x.remove());
+}
+
+function drag(el){
+ let sx,sy,sl,st;
+
+ el.addEventListener('touchstart',e=>{
+  if(e.target.className==='resize') return;
+  let t=e.touches[0];
+  sx=t.clientX;
+  sy=t.clientY;
+  sl=parseInt(el.style.left);
+  st=parseInt(el.style.top);
+ });
+
+ el.addEventListener('touchmove',e=>{
+  if(e.target.className==='resize') return;
+  e.preventDefault();
+  let t=e.touches[0];
+
+  el.style.left=(sl+(t.clientX-sx)/scale)+'px';
+  el.style.top=(st+(t.clientY-sy)/scale)+'px';
+ },{passive:false});
+}
+
+function resize(el,h){
+ let sx,sy,sw,sh;
+
+ h.addEventListener('touchstart',e=>{
+  e.stopPropagation();
+  let t=e.touches[0];
+  sx=t.clientX;
+  sy=t.clientY;
+  sw=parseInt(getComputedStyle(el).width);
+  sh=parseInt(getComputedStyle(el).height);
+ });
+
+ h.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  let t=e.touches[0];
+
+  el.style.width=(sw+(t.clientX-sx)/scale)+'px';
+  el.style.height=(sh+(t.clientY-sy)/scale)+'px';
+ },{passive:false});
+}
+</script>
+</body>
+</html>
